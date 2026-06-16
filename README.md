@@ -118,7 +118,6 @@ The smart-cabinet feature is the differentiator: it converts a courier handoff i
 ├── smart-takeout-miniapp/         # WeChat mini-program (uni-app build output)
 ├── .env.example                   # Environment variable template
 ├── .gitignore
-├── LICENSE
 └── CHANGELOG.md
 ```
 
@@ -256,9 +255,3 @@ All keys are environment-variable driven. See `.env.example` for the full list.
 | 5 | Service decomposition | Split into `admin` / `user` / `cabinet` micro-services; share `smart-takeout-common` and `smart-takeout-pojo` as jars; introduce Spring Cloud Gateway |
 | 6 | Observability | Micrometer + Prometheus for metrics; OpenTelemetry for tracing; Loki or ELK for logs |
 | 7 | Platform upgrade | Spring Boot 3.x, Jakarta EE namespace, JDK 21 LTS |
-
----
-
-## License
-
-[MIT](./LICENSE)

@@ -21,6 +21,8 @@ WeChat mini-program client for Smart Takeout Service.
 
 Other registered pages: `order`, `pay`, `success`, `details`, `my`, `historyOrder`, `address`, `addOrEditAddress`, `remark`, `nonet`, `showQrcode`.
 
+> Note: tab bar labels and per-page `navigationBarTitleText` in the WeChat mini-program config files are localized in Chinese for the end-user audience.
+
 ## Backend integration
 
 - All encapsulated API calls go through the bundled `request()` helper in `common/vendor.js`.
@@ -31,7 +33,7 @@ Other registered pages: `order`, `pay`, `success`, `details`, `my`, `historyOrde
 
 1. Open the project in WeChat DevTools.
 2. Update the API base URL inside `common/vendor.js` to point at your local backend.
-3. In WeChat DevTools, enable **"不校验合法域名"** (Skip URL合法性校验) during development, or add your domain to the `request 合法域名` list in the WeChat MP admin console.
+3. In WeChat DevTools, disable URL legality validation during development, or add your domain to the **request legal domain** list in the WeChat MP admin console.
 
 ## Build artifacts
 
