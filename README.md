@@ -1,257 +1,85 @@
-# Smart Takeout Service
+# Smart Takeout Service · 智能外卖服务
 
-> End-to-end takeout platform: customer mini-program, merchant admin console, and smart delivery-cabinet pickup — wired together with a single Spring Boot backend.
+> 一体化外卖平台：用户微信小程序 + 商家管理后台 + 智能外卖柜取餐，一个 Spring Boot 后端全部打通。
 
-Smart Takeout Service is an integrated food-ordering and last-mile delivery platform for small and mid-sized restaurant chains. It serves three audiences from one codebase:
-
-- **Customers** place orders from a WeChat mini-program.
-- **Store staff** manage dishes, setmeals, orders, and business reports from an admin console.
-- **Delivery workers** drop orders into a smart cabinet; customers retrieve them with a pickup code.
-
-The smart-cabinet feature is the differentiator: it converts a courier handoff into a contactless, code-verified pickup, with the application layer already wired up for hardware integration (see [Roadmap](#roadmap)).
+面向中小型连锁餐饮门店。服务三类用户：顾客、门店员工、配送员。智能外卖柜是差异化能力——把骑手当面交接变成无接触、取件码验证的取餐体验，硬件对接待后续接入。
 
 ---
 
-## Features
+## 核心能力
 
-### Customer mini-program (`/user/**`)
+- **用户端**（`/user/**`）：微信 OAuth 登录、菜品浏览、购物车、地址簿、订单提交、微信支付 V3（JSAPI + 退款）、催单、取件码验证
+- **管理端**（`/admin/**`）：员工 / 配送员 CRUD、菜品 / 套餐 / 分类管理、订单全流程（接单 / 拒单 / 派送 / 完成）、指派配送员、营业数据报表、Excel 导出、WebSocket 推送
+- **柜端 / 配送端**（`/delivery_worker/**`）：`POST /apply_box` 申请空柜、生成 6 位取件码、柜状态追踪
 
-- WeChat OAuth login (openid → JWT)
-- Browse categories, dishes, setmeals
-- Shopping cart with add / decrement / clear
-- Address book CRUD with default address
-- Order submission, simulated payment, history, reorder, cancel, reminder
-- WeChat Pay V3 (JSAPI) and refund callback
-- **Pickup-code verification** for cabinet retrieval (`POST /user/user/getTakeout`)
-
-### Merchant admin console (`/admin/**`)
-
-- Employee & delivery worker CRUD
-- Dish, flavor, setmeal, and category management
-- Order search, statistics, confirm / reject / cancel / deliver / complete
-- **Delivery worker assignment** for orders
-- Daily / weekly business reports and Excel export (Apache POI)
-- Shop open / close toggle (Redis-cached)
-- Real-time order-arrival and reminder push over WebSocket
-
-### Smart cabinet & delivery (`/delivery_worker/**`)
-
-- `POST /delivery_worker/apply_box` — assign a free box, generate 6-digit pickup code, MD5-stored on the order
-- Cabinet status tracking (`box_status`: 0 free / 1 occupied)
-- Order ↔ cabinet linkage (`orders.box_id`, `orders.box_code`, `orders.delivery_worker_id`)
-
-### Cross-cutting
-
-- Two independent JWT schemes (admin / user) with separate signing keys
-- Aspect-driven audit field population (`createTime`, `updateTime`, `createUser`, `updateUser`)
-- Global exception handler with domain-specific business exceptions
-- Scheduled jobs: order timeout cancellation, in-progress delivery timeout
-- Knife4j (Swagger) API documentation
+横切：管理端 / 用户端两套独立 JWT；切面自动填充审计字段；全局异常体系；订单超时定时任务；Knife4j 接口文档。
 
 ---
 
-## Tech Stack
+## 技术栈
 
-| Layer | Technology |
+| 类别 | 技术 |
 | --- | --- |
-| Backend framework | Spring Boot 2.7.3 |
-| Build | Maven 3.6+ |
-| Language | Java 17 |
-| Persistence | MyBatis-Spring-Boot 2.2.0, MySQL 5.7 / 8.0 |
-| Connection pool | Alibaba Druid 1.2.1 |
-| Paging | PageHelper 1.3.0 |
-| Cache | Spring Data Redis |
-| Auth | JJWT 0.9.1 (dual signing keys for admin / user) |
-| Real-time | spring-boot-starter-websocket |
-| Object storage | Aliyun OSS SDK 3.10.2 |
-| Payment | wechatpay-apiv3 (Apache HttpClient) 0.4.8 |
-| Office | Apache POI 3.16 (Excel export) |
-| API docs | Knife4j (Swagger) 3.0.2 |
-| AOP | AspectJ 1.9.4 |
-| JSON | Alibaba Fastjson 1.2.76, Jackson 2.9.2 |
-| Mini-program | uni-app (Vue 2), WeChat SDK 2.24.2 |
+| 后端 | Spring Boot 2.7.3、Java 17、Maven 多模块（common / pojo / server） |
+| 持久化 | MyBatis-Spring-Boot 2.2.0、MySQL 5.7+、Druid 1.2.1、PageHelper 1.3.0 |
+| 缓存 / 鉴权 | Spring Data Redis、JJWT 0.9.1（双端密钥） |
+| 实时 / 支付 | spring-boot-starter-websocket、wechatpay-apiv3 0.4.8 |
+| 存储 / Office | Aliyun OSS SDK 3.10.2、Apache POI 3.16 |
+| 切面 / 文档 / JSON | AspectJ 1.9.4、Knife4j 3.0.2、Fastjson 1.2.76、Jackson 2.9.2 |
+| 小程序 | uni-app（Vue 2）、微信 SDK 2.24.2 |
 
 ---
 
-## Architecture
+## API 路由
 
-```
-┌──────────────────────┐    ┌──────────────────────┐    ┌──────────────────────┐
-│  Customer            │    │  Merchant            │    │  Delivery worker     │
-│  WeChat mini-program │    │  admin console       │    │  WeChat mini-program │
-└──────────┬───────────┘    └──────────┬───────────┘    └──────────┬───────────┘
-           │ /user/**                 │ /admin/**                │ /delivery_worker/**
-           └──────────────────────────┴──────────────────────────┘
-                                      │
-                          ┌───────────▼────────────┐
-                          │   Spring Boot          │
-                          │   smart-takeout-server │
-                          │   (REST + WebSocket)   │
-                          └──────┬──────────┬──────┘
-                                 │          │
-                  ┌──────────────┘          └──────────────┐
-                  │                                         │
-       ┌──────────▼──────────┐                  ┌──────────▼──────────┐
-       │  MySQL              │                  │  Redis              │
-       │  smart_takeout      │                  │  shop status, JWT,  │
-       │  14+ tables         │                  │  captcha, locks     │
-       └─────────────────────┘                  └─────────────────────┘
-
-       ┌─────────────────────┐                  ┌─────────────────────┐
-       │  Aliyun OSS         │                  │  WeChat Pay V3      │
-       │  dish / setmeal     │                  │  JSAPI + refund     │
-       │  images             │                  │  + callback         │
-       └─────────────────────┘                  └─────────────────────┘
-```
-
----
-
-## Repository Layout
-
-```
-.
-├── smart-takeout-backend/         # Spring Boot backend
-│   ├── pom.xml
-│   ├── smart-takeout-common/      # Constants, exceptions, result wrappers, utilities
-│   ├── smart-takeout-pojo/        # Entities, DTOs, VOs
-│   └── smart-takeout-server/      # Controllers, services, mappers, config, tasks
-├── smart-takeout-miniapp/         # WeChat mini-program (uni-app build output)
-├── .env.example                   # Environment variable template
-├── .gitignore
-└── CHANGELOG.md
-```
-
----
-
-## Backend Module Map
-
-| Module | Purpose |
-| --- | --- |
-| `smart-takeout-common` | Shared constants (`StatusConstant`, `MessageConstant`, `JwtClaimsConstant`), exception hierarchy, `Result<T>` / `PageResult` wrappers, `@ConfigurationProperties` holders, `JwtUtil` / `AliOssUtil` / `HttpClientUtil` / `WeChatPayUtil` |
-| `smart-takeout-pojo` | `entity` (13 tables), `dto` (19 input shapes), `vo` (17 output shapes) |
-| `smart-takeout-server` | Spring Boot entry point; `controller/` (admin / user / notify), `service/`, `mapper/` (with XML mappers in `resources/mapper/`), `aspect/`, `interceptor/`, `config/`, `task/`, `websocket/`, `handler/` |
-
-> The original `sky-*` directory names are kept for IDE / Git history compatibility. Source Java packages remain `com.smart.*`. See the [Roadmap](#roadmap) for the rename roadmap.
-
----
-
-## API Surface
-
-| Prefix | Audience | Notes |
+| 前缀 | 用途 | 鉴权 |
 | --- | --- | --- |
-| `/admin/**` | Merchant console | JWT-protected (header `token`); excludes `/admin/employee/login` |
-| `/user/**` | Customer mini-program | JWT-protected (header `authentication`); excludes `/user/user/login`, `/user/shop/status` |
-| `/delivery_worker/**` | Delivery worker mini-program | JWT-protected; current endpoint: `POST /apply_box` |
-| `/notify/**` | WeChat Pay callback | Server-to-server, signature-verified, **no JWT** |
-| `ws://.../ws/{sid}` | Admin console | WebSocket push for new-order and reminder events |
+| `/admin/**` | 商家管理后台 | JWT（`token` header，登录放行） |
+| `/user/**` | 用户小程序 | JWT（`authentication` header，登录与状态查询放行） |
+| `/delivery_worker/**` | 配送员小程序 | JWT |
+| `/notify/**` | 微信支付回调 | 服务端对服务端，**无 JWT**，签名校验 |
+| `ws://.../ws/{sid}` | 管理后台 | WebSocket 推送新订单 / 催单 |
 
-Knife4j UI: `http://localhost:8080/doc.html` (dev only).
+Knife4j：`http://localhost:8080/doc.html`
 
 ---
 
-## Getting Started
+## 本地运行
 
-### Prerequisites
-
-- JDK 17
-- Maven 3.6+
-- MySQL 5.7 / 8.0
-- Redis 5+
-- (Optional) `cpolar` or another tunnel for receiving WeChat Pay callbacks
-
-### 1. Initialize the database
-
-Create the `smart_takeout` schema. The DDL is **not** included in this repository — derive it from the `entity/` classes or generate it via reverse-engineering tooling. The minimum table set is listed in [Database](#database).
-
-### 2. Configure environment variables
-
-Copy `.env.example` to `.env` and fill in real values:
+**环境**：JDK 17、Maven 3.6+、MySQL 5.7+、Redis 5+
 
 ```bash
+# 1. 初始化数据库（DDL 需自行按 entity/ 生成；最小表见下方）
+# 2. 复制并填写环境变量
 cp .env.example .env
-# edit .env
-```
 
-All sensitive values (DB password, Redis password, Aliyun OSS keys, WeChat Pay merchant keys, JWT secrets) **must** be supplied via environment variables. Defaults in `application.yml` are intentionally weak and meant to be overridden.
-
-### 3. Build & run
-
-```bash
+# 3. 编译并启动
 cd smart-takeout-backend
 mvn -DskipTests clean package
 mvn -pl smart-takeout-server spring-boot:run
 ```
 
-Or with the env file:
+数据库最小表：`employee` / `category` / `dish` / `dish_flavor` / `setmeal` / `setmeal_dish` / `user` / `address_book` / `shopping_cart` / `orders` / `order_detail` / `delivery_workers` / `boxs`。`orders` 表额外带 `box_id` / `box_code` / `delivery_worker_id` 用于外卖柜流程。
 
-```bash
-set -a; source .env; set +a
-mvn -pl smart-takeout-server spring-boot:run
-```
-
-The server starts on `http://localhost:8080`.
-
-### 4. Open the mini-program
-
-Open `smart-takeout-miniapp/` in WeChat DevTools. Point the API base URL (inside `common/vendor.js`) at your local backend. Enable **"Skip URL legality check"** during development.
+小程序：用微信开发者工具打开 `smart-takeout-miniapp/`，把 `common/vendor.js` 里的 base URL 改为本地后端地址，关闭 URL 合法性校验。
 
 ---
 
-## Database
+## 配置项
 
-DDL is intentionally not committed. Minimum table set (corresponding to `entity/` classes):
-
-| Table | Entity | Notes |
-| --- | --- | --- |
-| `employee` | `Employee` | Store staff |
-| `category` | `Category` | Type 1 = dish, type 2 = setmeal |
-| `dish` / `dish_flavor` | `Dish` / `DishFlavor` | Dish + flavor (JSON value list) |
-| `setmeal` / `setmeal_dish` | `Setmeal` / `SetmealDish` | Setmeal + many-to-many dishes |
-| `user` | `User` | C-end user, linked by WeChat openid |
-| `address_book` | `AddressBook` | Per-user address list |
-| `shopping_cart` | `ShoppingCart` | Per-user cart |
-| `orders` / `order_detail` | `Orders` / `OrderDetail` | Order + line items; order also carries `box_id`, `box_code`, `delivery_worker_id` for cabinet flow |
-| `delivery_workers` | `DeliveryWorker` | Delivery staff (separate from `employee`) |
-| `boxs` | `DeliveryBox` (partial) | Physical cabinet boxes; `box_status` 0 = free, 1 = occupied |
-
-> Recommend placing the DDL under `smart-takeout-server/src/main/resources/db/migration/` and managing it with Flyway. See [Roadmap](#roadmap).
+所有敏感值通过环境变量注入，完整列表见 `.env.example`。主要分组：DB、Redis、Aliyun OSS、WeChat（AppID / Secret / 商户号 / 商户私钥 / 证书 / 回调 URL）、JWT（管理端 / 用户端各自的 secret + TTL + token 名）、业务（`SMART_SHOP_ADDRESS` / `SMART_BAIDU_AK`）。
 
 ---
 
-## Configuration Reference
+## 演进路线
 
-All keys are environment-variable driven. See `.env.example` for the full list.
-
-| Group | Variables |
+| 阶段 | 目标 |
 | --- | --- |
-| Database | `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD` |
-| Redis | `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_DB` |
-| Aliyun OSS | `SMART_ALIOSS_ENDPOINT`, `SMART_ALIOSS_ACCESS_KEY_ID`, `SMART_ALIOSS_ACCESS_KEY_SECRET`, `SMART_ALIOSS_BUCKET_NAME` |
-| WeChat | `SMART_WECHAT_APPID`, `SMART_WECHAT_SECRET`, `SMART_WECHAT_MCHID`, `SMART_WECHAT_MCH_SERIAL_NO`, `SMART_WECHAT_PRIVATE_KEY_FILE_PATH`, `SMART_WECHAT_API_V3_KEY`, `SMART_WECHAT_PAY_CERT_FILE_PATH`, `SMART_WECHAT_NOTIFY_URL`, `SMART_WECHAT_REFUND_NOTIFY_URL` |
-| JWT | `SMART_JWT_ADMIN_SECRET_KEY`, `SMART_JWT_ADMIN_TTL`, `SMART_JWT_ADMIN_TOKEN_NAME`, `SMART_JWT_USER_SECRET_KEY`, `SMART_JWT_USER_TTL`, `SMART_JWT_USER_TOKEN_NAME` |
-| Business | `SMART_SHOP_ADDRESS`, `SMART_BAIDU_AK` |
-
----
-
-## Deployment
-
-- Build: `mvn -DskipTests clean package` produces `smart-takeout-server/target/smart-takeout-server-1.0-SNAPSHOT.jar`.
-- Run: `java -jar smart-takeout-server-1.0-SNAPSHOT.jar`.
-- Inject secrets via your platform's secret store (K8s Secret, Vault, Nacos, Spring Cloud Config). **Do not** commit `.env` or any file containing real keys.
-- WeChat Pay callbacks require a publicly reachable URL — use a tunnel (`cpolar`, `frp`) or a public domain with a valid TLS certificate.
-- Redis must be reachable from the application; configure eviction policy for the keys used (`SHOP_STATUS`, captcha, JWT blacklist if added).
-
----
-
-## Roadmap
-
-| Phase | Goal | Notes |
-| --- | --- | --- |
-| 0 | Project structure & docs | **In progress** |
-| 1 | Naming alignment | Move Java package from `com.smart.takeout` to a more domain-specific root; rename `sky-*` module directories to match `smart-takeout-*` |
-| 2 | Secret management | Remove placeholder defaults in `application.yml`; require all secrets via environment variables or a config server |
-| 3 | Schema migrations | Introduce Flyway; commit `V1__init.sql` for the tables listed above |
-| 4 | Cabinet hardware | Define a `CabinetGateway` interface; integrate with the real cabinet vendor (MQTT, SDK, or serial) — currently only the application-side scheduling exists |
-| 5 | Service decomposition | Split into `admin` / `user` / `cabinet` micro-services; share `smart-takeout-common` and `smart-takeout-pojo` as jars; introduce Spring Cloud Gateway |
-| 6 | Observability | Micrometer + Prometheus for metrics; OpenTelemetry for tracing; Loki or ELK for logs |
-| 7 | Platform upgrade | Spring Boot 3.x, Jakarta EE namespace, JDK 21 LTS |
+| 0 | 项目结构与文档（**当前**） |
+| 1 | 命名收尾：把 `sky-*` 模块目录同步为 `smart-takeout-*` |
+| 2 | 密钥治理：移除占位默认值，强制走环境变量 / 配置中心 |
+| 3 | 引入 Flyway：提交 `V1__init.sql` |
+| 4 | 柜机硬件：定义 `CabinetGateway`，对接 MQTT / SDK（当前仅有应用层调度） |
+| 5 | 服务拆分：admin / user / cabinet 三个微服务 + Spring Cloud Gateway |
+| 6 | 可观测性：Micrometer + Prometheus + OpenTelemetry + Loki/ELK |
+| 7 | 工程升级：Spring Boot 3.x、Jakarta EE、JDK 21 LTS |
