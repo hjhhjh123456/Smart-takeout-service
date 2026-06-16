@@ -1,0 +1,7 @@
+/* pages/map/map.wxss */
+.view {
+  position: absolute;
+  width: 100%;
+  height: 80%;
+  bottom: 20%;
+}

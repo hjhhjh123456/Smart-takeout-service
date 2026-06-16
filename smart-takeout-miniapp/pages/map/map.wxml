@@ -1,0 +1,14 @@
+<!--pages/map/map.wxml-->
+<view class="view">
+   <map id="map" 
+   longitude="{{longitude}}"
+   latitude="{{latitude}}"
+   scale="17"
+   show-location="true"
+   style='width:1000rpx;height:1500rpx'
+   markers="{{markers}}"
+   >
+   </map>
+</view>
+
+

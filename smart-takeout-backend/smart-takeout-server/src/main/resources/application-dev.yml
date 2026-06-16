@@ -1,0 +1,31 @@
+# Local-development profile. Secrets are injected via environment variables
+# (see .env.example). Do not commit real credentials to this file.
+
+smart:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    host: ${DB_HOST:localhost}
+    port: ${DB_PORT:3306}
+    database: ${DB_NAME:smart_takeout}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+  alioss:
+    endpoint: ${SMART_ALIOSS_ENDPOINT}
+    access-key-id: ${SMART_ALIOSS_ACCESS_KEY_ID}
+    access-key-secret: ${SMART_ALIOSS_ACCESS_KEY_SECRET}
+    bucket-name: ${SMART_ALIOSS_BUCKET_NAME}
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    database: ${REDIS_DB:10}
+  wechat:
+    appid: ${SMART_WECHAT_APPID}
+    secret: ${SMART_WECHAT_SECRET}
+    mchid: ${SMART_WECHAT_MCHID}
+    mchSerialNo: ${SMART_WECHAT_MCH_SERIAL_NO}
+    privateKeyFilePath: ${SMART_WECHAT_PRIVATE_KEY_FILE_PATH}
+    apiV3Key: ${SMART_WECHAT_API_V3_KEY}
+    weChatPayCertFilePath: ${SMART_WECHAT_PAY_CERT_FILE_PATH}
+    notifyUrl: ${SMART_WECHAT_NOTIFY_URL}
+    refundNotifyUrl: ${SMART_WECHAT_REFUND_NOTIFY_URL}

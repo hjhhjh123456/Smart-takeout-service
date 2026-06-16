@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.smart.takeout.mapper.DeliveryBoxMapper">
+
+    <update id="applyBox" parameterType="com.smart.takeout.vo.ApplyBoxVO">
+        update orders
+        <set>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="boxId !=null">
+                box_id = #{boxId},
+            </if>
+            <if test="boxCode !=null">
+                box_code = #{boxCode},
+            </if>
+            <if test="status !=null">
+                status = #{status},
+            </if>
+        </set>
+        where id = #{orderId}
+    </update>
+</mapper>

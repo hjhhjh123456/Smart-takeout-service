@@ -1,0 +1,67 @@
+server:
+  port: 8080
+
+spring:
+  profiles:
+    active: dev
+  main:
+    allow-circular-references: true
+  datasource:
+    druid:
+      driver-class-name: ${smart.datasource.driver-class-name}
+      url: jdbc:mysql://${smart.datasource.host}:${smart.datasource.port}/${smart.datasource.database}?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
+      username: ${smart.datasource.username}
+      password: ${smart.datasource.password}
+  redis:
+    host: ${smart.redis.host}
+    port: ${smart.redis.port}
+    password: ${smart.redis.password}
+    database: ${smart.redis.database}
+
+mybatis:
+  #mapper配置文件
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.smart.takeout.entity
+  configuration:
+    #开启驼峰命名
+    map-underscore-to-camel-case: true
+
+logging:
+  level:
+    com:
+      smart:
+        takeout:
+          mapper: debug
+          service: info
+          controller: info
+
+smart:
+  jwt:
+    # 设置jwt签名加密时使用的秘钥 — 生产必须覆盖（建议从环境变量 SMART_JWT_ADMIN_SECRET_KEY 注入）
+    admin-secret-key: ${SMART_JWT_ADMIN_SECRET_KEY:please-change-me-via-env-var}
+    # 设置jwt过期时间（毫秒）
+    admin-ttl: ${SMART_JWT_ADMIN_TTL:7200000}
+    # 设置前端传递过来的令牌名称
+    admin-token-name: ${SMART_JWT_ADMIN_TOKEN_NAME:token}
+    user-secret-key: ${SMART_JWT_USER_SECRET_KEY:please-change-me-via-env-var}
+    user-ttl: ${SMART_JWT_USER_TTL:7200000}
+    user-token-name: ${SMART_JWT_USER_TOKEN_NAME:authentication}
+  alioss:
+    endpoint: ${SMART_ALIOSS_ENDPOINT}
+    access-key-id: ${SMART_ALIOSS_ACCESS_KEY_ID}
+    access-key-secret: ${SMART_ALIOSS_ACCESS_KEY_SECRET}
+    bucket-name: ${SMART_ALIOSS_BUCKET_NAME}
+  wechat:
+    appid: ${SMART_WECHAT_APPID}
+    secret: ${SMART_WECHAT_SECRET}
+    mchid: ${SMART_WECHAT_MCHID}
+    mchSerialNo: ${SMART_WECHAT_MCH_SERIAL_NO}
+    privateKeyFilePath: ${SMART_WECHAT_PRIVATE_KEY_FILE_PATH}
+    apiV3Key: ${SMART_WECHAT_API_V3_KEY}
+    weChatPayCertFilePath: ${SMART_WECHAT_PAY_CERT_FILE_PATH}
+    notifyUrl: ${SMART_WECHAT_NOTIFY_URL}
+    refundNotifyUrl: ${SMART_WECHAT_REFUND_NOTIFY_URL}
+  shop:
+    address: ${SMART_SHOP_ADDRESS:}
+  baidu:
+    ak: ${SMART_BAIDU_AK:}

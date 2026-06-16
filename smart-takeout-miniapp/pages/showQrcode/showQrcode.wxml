@@ -1,0 +1,7 @@
+<!--pages/showQrcode/showQrcode.wxml-->
+<view wx:if ="{{haveGetQrcode}}" class="code_box">
+  <view class="">
+    <canvas class="code_img" style="width: 200px; height: 200px;" canvas-id="{{myQrcode}}" ></canvas>
+  </view>
+</view>
+<view class="button" bindtap="save">保存二维码</view>

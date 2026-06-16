@@ -1,0 +1,64 @@
+<!--pages/mine/mine.wxml-->
+
+<view class="container">
+  <view class="userinfo">
+      <image bindtap="bindViewTap" class="userinfo-avatar" src="{{avatarUrl}}" mode="cover"></image>
+      <text class="userinfo-nickname">{{username}}</text>
+  </view>
+  <view class="usermotto">
+    <text class="user-motto">{{motto}}</text>
+  </view>
+
+  <view class="power">
+  <view class="power_info" bindtap="test">
+    <view class="power_info_text">
+      <view class="power_info_text_title">test</view>
+      <view class="power_info_text_tip">test</view>
+    </view>
+  </view>
+</view>
+
+<view class="power">
+  <view class="power_info" bindtap="jumpPageMap">
+    <view class="power_info_text">
+      <view class="power_info_text_title">储物柜地图</view>
+      <view class="power_info_text_tip">储物柜在校园的分布</view>
+    </view>
+  </view>
+</view>
+
+<view class="power">
+  <view class="power_info" bindtap="getTakeOut">
+    <view class="power_info_text">
+      <view class="power_info_text_title">开柜取餐</view>
+      <view class="power_info_text_tip">上传外卖商家二维码取餐</view>
+    </view>
+  </view>
+</view>
+
+<view class="power">
+  <view class="power_info" bindtap="saveTakeOut">
+    <view class="power_info_text">
+      <view class="power_info_text_title">开柜存餐</view>
+      <view class="power_info_text_tip">买卖员开柜存餐并生成二维码</view>
+    </view>
+  </view>
+</view>
+
+
+
+
+<view class="power">
+  <view class="power_info" bindtap="jumpPageBleDebug">
+    <view class="power_info_text">
+      <view class="power_info_text_title">蓝牙调试</view>
+      <view class="power_info_text_tip">蓝牙调试</view>
+    </view>
+  </view>
+</view>
+
+
+
+</view>
+
+
